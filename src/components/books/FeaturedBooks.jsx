@@ -4,9 +4,32 @@ import { motion } from 'framer-motion';
 import BookCard from './BookCard';
 import { useBooks } from '../../context/BookContext';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import HorizontalPagination from '../ui/HorizontalPagination';
 
 const FeaturedBooks = () => {
   const { featuredBooks, loading } = useBooks();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [displayedBooks, setDisplayedBooks] = useState([]);
+  const booksPerPage = 4; // Number of books to display per page
+  
+  useEffect(() => {
+    if (featuredBooks.length > 0) {
+      updateDisplayedBooks(1);
+    }
+  }, [featuredBooks]);
+  
+  // Function to update displayed books based on current page
+  const updateDisplayedBooks = (page) => {
+    const startIndex = (page - 1) * booksPerPage;
+    const endIndex = startIndex + booksPerPage;
+    setDisplayedBooks(featuredBooks.slice(startIndex, endIndex));
+  };
+  
+  // Handle page change
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    updateDisplayedBooks(pageNumber);
+  };
   
   const container = {
     hidden: { opacity: 0 },
@@ -53,15 +76,31 @@ const FeaturedBooks = () => {
         </div>
         
         <motion.div 
+          key={currentPage} // Re-render animation when page changes
           variants={container}
           initial="hidden"
           animate="show"
           className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
         >
-          {featuredBooks.slice(0, 4).map(book => (
+          {displayedBooks.map(book => (
             <BookCard key={book._id} book={book} />
           ))}
         </motion.div>
+        
+        {/* Horizontal pagination */}
+        {featuredBooks.length > booksPerPage && (
+          <div className="mt-8 flex flex-col items-center">
+            <HorizontalPagination 
+              currentPage={currentPage}
+              totalPages={Math.ceil(featuredBooks.length / booksPerPage)}
+              onPageChange={handlePageChange}
+              loading={loading}
+            />
+            <div className="text-sm text-gray-500 mt-2">
+              Showing {displayedBooks.length} of {featuredBooks.length} featured books
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

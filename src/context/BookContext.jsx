@@ -48,13 +48,41 @@ export const BookProvider = ({ children }) => {
   
   // Filter books based on search term and filters
   const filterBooks = async (searchTerm, filters) => {
-    const params = {
-      search: searchTerm || '',
-      genre: filters.genre || '',
-      minRating: filters.minRating || 0
-    };
+    try {
+      setLoading(true);
+      const params = {
+        search: searchTerm || '',
+        genre: filters.genre || ''
+      };
+      
+      // Get minimum rating filter
+      const minRating = parseFloat(filters.minRating) || 0;
+      
+      // If we have a minimum rating filter, add it to the params
+      if (minRating > 0) {
+        params.minRating = minRating;
+      }
+      
+      const response = await booksAPI.getAllBooks(params);
+      
+      if (response.success) {
+        // If the backend doesn't support minRating filtering, we can do it client-side
+        let filteredBooks = response.data.books;
+        
+        // Apply client-side filtering for minimum rating if needed
+        if (minRating > 0) {
+          filteredBooks = filteredBooks.filter(book => book.rating >= minRating);
+        }
+        
+        setBooks(filteredBooks);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to filter books');
+      console.error('Error filtering books:', err);
+    } finally {
+      setLoading(false);
+    }
     
-    await fetchBooks(params);
     return books;
   };
 

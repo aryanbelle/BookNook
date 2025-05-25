@@ -52,12 +52,22 @@ const BookDetailPage = () => {
     }
   };
   
+  const [reviewSubmitError, setReviewSubmitError] = useState(null);
+
   const handleReviewSubmit = async (bookId, reviewData) => {
     try {
       setError(null);
-      const updatedBook = await addReview(bookId, reviewData);
-      if (updatedBook) {
-        setBook(updatedBook);
+      setReviewSubmitError(null);
+      
+      const response = await reviewsAPI.addReview(bookId, reviewData);
+      
+      if (response.success) {
+        // Refresh book data
+        const bookData = await getBook(id);
+        if (bookData) {
+          setBook(bookData);
+        }
+        
         // Refresh reviews
         const reviewsResponse = await reviewsAPI.getBookReviews(id);
         if (reviewsResponse.success) {
@@ -65,9 +75,18 @@ const BookDetailPage = () => {
         }
       }
     } catch (err) {
-      setError(err.message || 'Failed to submit review');
+      // Set specific error for review submission
+      setReviewSubmitError(err.message || 'Failed to submit review');
       console.error('Error submitting review:', err);
     }
+  };
+  
+  // Calculate average rating from reviews
+  const calculateAverageRating = () => {
+    if (!reviews || reviews.length === 0) return 0;
+    
+    const sum = reviews.reduce((total, review) => total + review.rating, 0);
+    return parseFloat((sum / reviews.length).toFixed(1));
   };
   
   // Generate star rating
@@ -87,6 +106,12 @@ const BookDetailPage = () => {
     }
     
     return stars;
+  };
+  
+  // Check if user has already submitted a review
+  const hasUserReviewed = () => {
+    if (!user || !reviews) return false;
+    return reviews.some(review => review.userId === user.id);
   };
   
   if (loading) {
@@ -169,10 +194,10 @@ const BookDetailPage = () => {
                 
                 <div className="flex items-center mb-4">
                   <div className="flex mr-3">
-                    {renderRating(book.rating)}
+                    {renderRating(calculateAverageRating())}
                   </div>
-                  <span className="text-xl font-semibold text-gray-800">{book.rating}</span>
-                  <span className="text-gray-500 ml-2">({book.reviews.length} reviews)</span>
+                  <span className="text-xl font-semibold text-gray-800">{calculateAverageRating()}</span>
+                  <span className="text-gray-500 ml-2">({reviews.length} reviews)</span>
                 </div>
                 
                 <div className="mb-4">
@@ -215,7 +240,43 @@ const BookDetailPage = () => {
           
           {user && (
             <div id="write-review">
-              <ReviewForm bookId={book._id} onReviewSubmit={handleReviewSubmit} />
+              {hasUserReviewed() ? (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                        You have already submitted a review for this book. Multiple reviews are not allowed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : user.username === book.author ? (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">
+                        As the author of this book, you cannot submit a review for your own work.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <ReviewForm 
+                  bookId={book._id} 
+                  onReviewSubmit={handleReviewSubmit} 
+                  externalError={reviewSubmitError}
+                />
+              )}
             </div>
           )}
           

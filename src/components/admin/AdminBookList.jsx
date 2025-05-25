@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
 import { booksAPI } from '../../services/api';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminBookList = ({ onEditBook }) => {
+  const { user } = useAuth();
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -19,23 +21,11 @@ const AdminBookList = ({ onEditBook }) => {
   const fetchBooks = async () => {
     try {
       setLoading(true);
-      setError(null);
-      
-      const params = {
-        page: currentPage,
-        limit: 10,
-        search: searchTerm
-      };
-      
-      const response = await booksAPI.getAllBooks(params);
-      
-      if (response.success) {
-        setBooks(response.data.books);
-        setTotalPages(response.data.pagination.totalPages);
-      }
-    } catch (err) {
-      setError('Failed to load books. Please try again.');
-      console.error('Error fetching books:', err);
+      const response = await booksAPI.getMyBooks();
+      setBooks(response.data);
+    } catch (error) {
+      console.error('Error fetching books:', error);
+      setError('Failed to fetch books');
     } finally {
       setLoading(false);
     }
@@ -56,15 +46,18 @@ const AdminBookList = ({ onEditBook }) => {
     
     try {
       setLoading(true);
+      setError(null);
       const response = await booksAPI.deleteBook(confirmDelete);
       
       if (response.success) {
         // Remove the deleted book from the list
         setBooks(books.filter(book => book._id !== confirmDelete));
         setConfirmDelete(null);
+      } else {
+        setError(response.message || 'Failed to delete book. Please try again.');
       }
     } catch (err) {
-      setError('Failed to delete book. Please try again.');
+      setError(err.message || 'Failed to delete book. Please try again.');
       console.error('Error deleting book:', err);
     } finally {
       setLoading(false);

@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaUser, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
+import { usersAPI } from '../../services/api';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import BookCard from '../books/BookCard';
+import { Link } from 'react-router-dom';
 
 const UserProfile = () => {
-  const { user, login } = useAuth();
+  const { user, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
   const [userData, setUserData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -15,7 +22,50 @@ const UserProfile = () => {
       emailNotifications: user?.preferences?.emailNotifications || true
     }
   });
-  
+  const [userBooks, setUserBooks] = useState([]);
+  const [booksLoading, setBooksLoading] = useState(false);
+  const [booksError, setBooksError] = useState(null);
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        username: user.username || '',
+        email: user.email || '',
+        bio: user.bio || '',
+        preferences: {
+          favoriteGenres: user.preferences?.favoriteGenres || ['Fiction', 'Science Fiction'],
+          emailNotifications: user.preferences?.emailNotifications || true
+        }
+      });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user?._id) {
+      fetchUserBooks();
+    }
+  }, [user?._id]);
+
+  const fetchUserBooks = async () => {
+    try {
+      setBooksLoading(true);
+      setBooksError(null);
+      const response = await usersAPI.getUserBooks(user._id);
+      if (response.success) {
+        // The backend returns books in response.data.books
+        setUserBooks(response.data.books || []);
+      } else {
+        setBooksError(response.message || 'Failed to load your books');
+      }
+    } catch (err) {
+      setBooksError(err.message || 'Failed to load your books');
+      console.error('Error fetching user books:', err);
+    } finally {
+      setBooksLoading(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -35,28 +85,61 @@ const UserProfile = () => {
       }));
     }
   };
-  
-  const handleSave = () => {
-    // Update user data (in a real app, this would be an API call)
-    login({
-      ...user,
-      ...userData
-    });
-    setIsEditing(false);
+
+  const handleSave = async () => {
+    try {
+      if (!user?._id) return;
+      
+      setLoading(true);
+      setError(null);
+      setSuccessMessage('');
+
+      const updatedData = {
+        ...userData,
+        name: user.name // Keep the existing name if it's not being updated
+      };
+
+      const response = await usersAPI.updateUserProfile(user._id, updatedData);
+      
+      if (response.success) {
+        // Update both local state and auth context with the response data
+        const updatedUserData = response.data;
+        updateUser(updatedUserData);
+        setUserData(prev => ({
+          ...prev,
+          ...updatedUserData,
+          preferences: {
+            ...prev.preferences,
+            ...(updatedUserData.preferences || {})
+          }
+        }));
+        
+        setSuccessMessage('Profile updated successfully!');
+        setIsEditing(false);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+      console.error('Error updating profile:', err);
+    } finally {
+      setLoading(false);
+    }
   };
-  
+
   const handleCancel = () => {
-    // Reset form data
+    if (!user) return;
+    
     setUserData({
-      username: user?.username || '',
-      email: user?.email || '',
-      bio: user?.bio || '',
+      username: user.username || '',
+      email: user.email || '',
+      bio: user.bio || '',
       preferences: {
-        favoriteGenres: user?.preferences?.favoriteGenres || ['Fiction', 'Science Fiction'],
-        emailNotifications: user?.preferences?.emailNotifications || true
+        favoriteGenres: user.preferences?.favoriteGenres || ['Fiction', 'Science Fiction'],
+        emailNotifications: user.preferences?.emailNotifications || true
       }
     });
     setIsEditing(false);
+    setError(null);
+    setSuccessMessage('');
   };
   
   return (
@@ -71,6 +154,7 @@ const UserProfile = () => {
           <button
             onClick={() => setIsEditing(true)}
             className="btn btn-secondary flex items-center"
+            disabled={loading}
           >
             <FaEdit className="mr-2" />
             Edit Profile
@@ -80,13 +164,24 @@ const UserProfile = () => {
             <button
               onClick={handleSave}
               className="btn btn-primary flex items-center"
+              disabled={loading}
             >
-              <FaSave className="mr-2" />
-              Save
+              {loading ? (
+                <>
+                  <LoadingSpinner size="small" />
+                  <span className="ml-2">Saving...</span>
+                </>
+              ) : (
+                <>
+                  <FaSave className="mr-2" />
+                  Save
+                </>
+              )}
             </button>
             <button
               onClick={handleCancel}
               className="btn btn-secondary flex items-center"
+              disabled={loading}
             >
               <FaTimes className="mr-2" />
               Cancel
@@ -94,6 +189,38 @@ const UserProfile = () => {
           </div>
         )}
       </div>
+      
+      {/* Success message */}
+      {successMessage && (
+        <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-green-700">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Error message */}
+      {error && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
       
       <div className="flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3 flex flex-col items-center">
@@ -232,6 +359,31 @@ const UserProfile = () => {
             </div>
           )}
         </div>
+      </div>
+      
+      {/* User's Books Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Books</h2>
+        {booksLoading ? (
+          <LoadingSpinner />
+        ) : booksError ? (
+          <div className="text-red-600">{booksError}</div>
+        ) : userBooks.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {userBooks.map(book => (
+              <BookCard key={book._id} book={book} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-gray-50 rounded-lg">
+            <p className="text-gray-600">You haven't published any books yet.</p>
+            {user.role === 'admin' && (
+              <Link to="/admin" className="btn btn-primary mt-4">
+                Create Your First Book
+              </Link>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );

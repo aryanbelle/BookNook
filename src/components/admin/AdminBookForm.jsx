@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { FaSave, FaUpload } from 'react-icons/fa';
 import { booksAPI } from '../../services/api';
 import { genres } from '../../data/books'; // Reusing the genres from the mock data
+import { useAuth } from '../../context/AuthContext';
 
 const AdminBookForm = ({ book, onSuccess }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     author: '',
@@ -59,8 +61,13 @@ const AdminBookForm = ({ book, onSuccess }) => {
         // Update existing book
         response = await booksAPI.updateBook(book._id, formData);
       } else {
-        // Create new book
-        response = await booksAPI.createBook(formData);
+        // Create new book, add authorId and author
+        const bookData = {
+          ...formData,
+          authorId: user._id,
+          author: user.username || user.name
+        };
+        response = await booksAPI.createBook(bookData);
       }
       
       if (response.success) {

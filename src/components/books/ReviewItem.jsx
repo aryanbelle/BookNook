@@ -4,10 +4,25 @@ import { motion } from 'framer-motion';
 
 const ReviewItem = ({ review }) => {
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    if (!dateString) return 'Unknown date';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Unknown date';
+      }
+      
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(date);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
   };
-  
+
   // Generate star rating
   const renderRating = (rating) => {
     const stars = [];
@@ -26,23 +41,32 @@ const ReviewItem = ({ review }) => {
     
     return stars;
   };
-  
+
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.3 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
       className="bg-white rounded-lg shadow-flat p-4 mb-4"
     >
       <div className="flex items-start">
-        <div className="bg-primary-100 rounded-full p-2 mr-3">
-          <FaUser className="text-primary-700" />
+        <div className="flex-shrink-0 mr-4">
+          {review.userId.avatar ? (
+            <img
+              src={review.userId.avatar}
+              alt={review.userId.username}
+              className="h-10 w-10 rounded-full"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+              <FaUser className="text-gray-400" />
+            </div>
+          )}
         </div>
         
-        <div className="flex-1">
+        <div className="flex-grow">
           <div className="flex justify-between items-center mb-2">
-            <h4 className="font-medium text-gray-900">{review.username}</h4>
-            <span className="text-sm text-gray-500">{formatDate(review.date)}</span>
+            <h4 className="font-medium text-gray-900">{review.userId.username}</h4>
+            <span className="text-sm text-gray-500">{formatDate(review.createdAt)}</span>
           </div>
           
           <div className="flex mb-3">

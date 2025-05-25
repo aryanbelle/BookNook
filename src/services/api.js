@@ -60,7 +60,7 @@ export const authAPI = {
 
 // Books API
 export const booksAPI = {
-  getAllBooks: (params = {}) => {
+  getAllBooks: (params = {}, options = {}) => {
     const queryParams = new URLSearchParams();
     
     // Add query parameters if they exist
@@ -72,7 +72,11 @@ export const booksAPI = {
     if (params.order) queryParams.append('order', params.order);
     
     const queryString = queryParams.toString();
-    return fetchData(`/books${queryString ? `?${queryString}` : ''}`);
+    return fetchData(`/books${queryString ? `?${queryString}` : ''}`, options);
+  },
+  
+  getMyBooks: (options = {}) => {
+    return fetchData('/books/my-books', options);
   },
   
   getBook: (id) => {
@@ -123,13 +127,14 @@ export const reviewsAPI = {
   },
   
   addReview: (bookId, reviewData) => {
-    // Include the bookId in the review data
+    // Include the bookId in the review data and ensure date is properly formatted
     const reviewWithBookId = {
       ...reviewData,
-      bookId
+      bookId,
+      date: new Date().toISOString() // Ensure we have a properly formatted date
     };
     
-    return fetchData(`/reviews`, {
+    return fetchData('/reviews', {
       method: 'POST',
       body: JSON.stringify(reviewWithBookId)
     });
@@ -155,8 +160,8 @@ export const usersAPI = {
     return fetchData(`/users/${userId}`);
   },
   
-  updateUserProfile: (userData) => {
-    return fetchData('/users/profile', {
+  updateUserProfile: (userId, userData) => {
+    return fetchData(`/users/${userId}`, {
       method: 'PUT',
       body: JSON.stringify(userData)
     });
@@ -177,5 +182,10 @@ export const usersAPI = {
     return fetchData(`/users/reading-list/${bookId}`, {
       method: 'DELETE'
     });
+  },
+  
+  getUserBooks: (userId) => {
+    // Fetch books where authorId matches userId
+    return fetchData(`/books?authorId=${userId}`);
   }
 };

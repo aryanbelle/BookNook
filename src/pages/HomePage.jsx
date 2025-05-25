@@ -8,7 +8,7 @@ const HomePage = () => {
   return (
     <div>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-primary-900 to-primary-700 text-white pt-32 pb-20">
+      <section className="relative bg-gradient-to-r from-primary-900 to-primary-700 text-white pt-40 pb-24">
         <div className="container-narrow relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -16,14 +16,14 @@ const HomePage = () => {
             transition={{ duration: 0.5 }}
             className="text-center"
           >
-            <h1 className="text-4xl text-white md:text-5xl font-bold mb-4">
+            <h1 className="text-4xl text-white md:text-5xl font-bold mb-6">
               Discover Your Next Favorite Book
             </h1>
-            <p className="text-xl md:text-2xl text-gray-200 mb-8 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-gray-200 mb-16 max-w-3xl mx-auto">
               Join our community of book lovers to find, review, and share the best reads.
             </p>
             
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mb-20">
               <Link to="/books" className="btn btn-accent text-lg px-6 py-3">
                 Browse Books
               </Link>

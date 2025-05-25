@@ -40,21 +40,12 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authAPI.login(credentials);
       if (response.success) {
-        // Store user data with role information
         const userData = response.data;
         setUser(userData);
         localStorage.setItem('token', userData.token);
         
-        // Immediately fetch current user to get complete user data including role
-        try {
-          const userResponse = await authAPI.getCurrentUser();
-          if (userResponse.success) {
-            setUser(userResponse.data);
-          }
-        } catch (userErr) {
-          console.error('Error fetching complete user data:', userErr);
-        }
-        
+        // Fetch full user data
+        await fetchCurrentUser();
         return true;
       }
     } catch (err) {
@@ -68,27 +59,12 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       const response = await authAPI.register(userData);
       if (response.success) {
-        // Store user data with role information
         const registeredUser = response.data;
-        
-        // Explicitly set the role from the registration data
-        if (userData.role) {
-          registeredUser.role = userData.role;
-        }
-        
         setUser(registeredUser);
         localStorage.setItem('token', registeredUser.token);
         
-        // Immediately fetch current user to get complete user data including role
-        try {
-          const userResponse = await authAPI.getCurrentUser();
-          if (userResponse.success) {
-            setUser(userResponse.data);
-          }
-        } catch (userErr) {
-          console.error('Error fetching complete user data:', userErr);
-        }
-        
+        // Fetch full user data
+        await fetchCurrentUser();
         return true;
       }
     } catch (err) {
@@ -97,15 +73,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (err) {
-      console.error('Error during logout:', err);
-    } finally {
-      setUser(null);
-      localStorage.removeItem('token');
-    }
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('token');
+  };
+
+  // Update user in state immediately after profile update
+  const updateUser = (userData) => {
+    setUser(prevUser => ({
+      ...prevUser,
+      ...userData,
+      // Ensure nested objects are merged correctly
+      preferences: {
+        ...(prevUser?.preferences || {}),
+        ...(userData?.preferences || {})
+      }
+    }));
   };
 
   const value = {
@@ -113,10 +96,15 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
-    register,
     logout,
-    isAuthenticated: !!user
+    register,
+    updateUser,
+    fetchCurrentUser  // Export this so components can refresh user data
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

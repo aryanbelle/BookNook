@@ -6,7 +6,7 @@ import { RiUser3Line, RiLoginBoxLine, RiLogoutBoxLine } from 'react-icons/ri';
 import { useAuth } from '../../context/AuthContext';
 
 const Navbar = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -79,6 +79,7 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
+            {/* Search Bar */}
             <div className="relative">
               <form onSubmit={handleSearch} className="flex">
                 <input
@@ -96,178 +97,129 @@ const Navbar = () => {
                 </button>
               </form>
             </div>
-            
+
+            {/* Navigation Links */}
             <Link 
-              to="/" 
-              className={`font-medium text-sm hover:${isTransparent ? 'text-white' : 'text-primary-700'} transition-colors ${
-                location.pathname === '/' 
-                  ? isTransparent 
-                    ? 'text-white border-b-2 border-white pb-1' 
-                    : 'text-primary-700 border-b-2 border-primary-700 pb-1' 
-                  : isTransparent 
-                    ? 'text-gray-100' 
-                    : 'text-gray-700'
-              }`}
-            >
-              Home
-            </Link>
-            
-            <Link 
-              to="/books" 
-              className={`font-medium text-sm hover:${isTransparent ? 'text-white' : 'text-primary-700'} transition-colors ${
-                location.pathname === '/books' 
-                  ? isTransparent 
-                    ? 'text-white border-b-2 border-white pb-1' 
-                    : 'text-primary-700 border-b-2 border-primary-700 pb-1' 
-                  : isTransparent 
-                    ? 'text-gray-100' 
-                    : 'text-gray-700'
-              }`}
+              to="/books"
+              className={`nav-link ${isTransparent ? "text-white hover:text-gray-200" : "text-gray-700 hover:text-primary-700"}`}
             >
               Books
             </Link>
-            
-            {isAuthenticated ? (
+
+            {user ? (
               <>
-                <Link 
-                  to="/profile" 
-                  className={`font-medium text-sm hover:${isTransparent ? 'text-white' : 'text-primary-700'} transition-colors ${
-                    location.pathname === '/profile' 
-                      ? isTransparent 
-                        ? 'text-white border-b-2 border-white pb-1' 
-                        : 'text-primary-700 border-b-2 border-primary-700 pb-1' 
-                      : isTransparent 
-                        ? 'text-gray-100' 
-                        : 'text-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center space-x-1">
-                    <RiUser3Line className="text-base" />
-                    <span>Profile</span>
-                  </div>
-                </Link>
-                
-                {user && user.role === 'admin' && (
+                {user.role === 'admin' && (
                   <Link 
-                    to="/admin" 
-                    className={`font-medium text-sm hover:${isTransparent ? 'text-white' : 'text-primary-700'} transition-colors ${
-                      location.pathname === '/admin' 
-                        ? isTransparent 
-                          ? 'text-white border-b-2 border-white pb-1' 
-                          : 'text-primary-700 border-b-2 border-primary-700 pb-1' 
-                        : isTransparent 
-                          ? 'text-gray-100' 
-                          : 'text-gray-700'
-                    }`}
+                    to="/admin"
+                    className={`nav-link ${isTransparent ? "text-white hover:text-gray-200" : "text-gray-700 hover:text-primary-700"}`}
                   >
-                    <div className="flex items-center space-x-1">
-                      <RiUser3Line className="text-base" />
-                      <span>Admin</span>
-                    </div>
+                    Admin
                   </Link>
                 )}
-                
-                <button 
-                  onClick={handleLogout}
-                  className={`flex items-center space-x-1 font-medium text-sm ${
-                    isTransparent ? 'text-gray-100 hover:text-white' : 'text-gray-700 hover:text-primary-700'
-                  } transition-colors`}
+                <Link 
+                  to="/profile"
+                  className={`nav-link flex items-center space-x-1 ${isTransparent ? "text-white hover:text-gray-200" : "text-gray-700 hover:text-primary-700"}`}
                 >
-                  <RiLogoutBoxLine className="text-base" />
+                  <RiUser3Line />
+                  <span>Profile</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className={`nav-link flex items-center space-x-1 ${isTransparent ? "text-white hover:text-gray-200" : "text-gray-700 hover:text-primary-700"}`}
+                >
+                  <RiLogoutBoxLine />
                   <span>Logout</span>
                 </button>
               </>
             ) : (
               <Link 
-                to="/login" 
-                className={`btn ${isTransparent ? 'bg-white text-primary-900 hover:bg-gray-100' : 'btn-primary'} py-1.5 px-3 text-sm`}
+                to="/login"
+                className={`nav-link flex items-center space-x-1 ${isTransparent ? "text-white hover:text-gray-200" : "text-gray-700 hover:text-primary-700"}`}
               >
-                <RiLoginBoxLine className="text-base" />
+                <RiLoginBoxLine />
                 <span>Login</span>
               </Link>
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <button 
-              onClick={() => setIsOpen(!isOpen)}
-              className={isTransparent ? "text-white hover:text-gray-200" : "text-gray-700 hover:text-primary-700"}
-              aria-label="Toggle menu"
-            >
-              {isOpen ? (
-                <HiOutlineX className="text-2xl" />
-              ) : (
-                <HiOutlineMenu className="text-2xl" />
-              )}
-            </button>
-          </div>
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="md:hidden text-2xl"
+          >
+            {isOpen ? (
+              <HiOutlineX className={isTransparent ? "text-white" : "text-gray-700"} />
+            ) : (
+              <HiOutlineMenu className={isTransparent ? "text-white" : "text-gray-700"} />
+            )}
+          </button>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Menu */}
         {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-            className="md:hidden mt-3 py-3 bg-white rounded shadow-dropdown"
-          >
-            <form onSubmit={handleSearch} className="px-4 mb-3">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search books..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="input py-2 w-full text-sm"
-                />
-                <button 
-                  type="submit" 
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-primary-700"
-                >
-                  <HiOutlineSearch className="text-lg" />
-                </button>
-              </div>
-            </form>
-            
-            <Link to="/" className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50">
-              <span>Home</span>
-            </Link>
-            
-            <Link to="/books" className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50">
-              <span>Books</span>
-            </Link>
-            
-            {isAuthenticated ? (
-              <>
-                <Link to="/profile" className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50">
-                  <RiUser3Line className="text-base" />
-                  <span>Profile</span>
-                </Link>
-                
-                {user && user.role === 'admin' && (
-                  <Link to="/admin" className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50">
-                    <RiUser3Line className="text-base" />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                )}
-                
-                <button 
-                  onClick={handleLogout}
-                  className="w-full text-left flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50"
-                >
-                  <RiLogoutBoxLine className="text-base" />
-                  <span>Logout</span>
-                </button>
-              </>
-            ) : (
-              <Link to="/login" className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50">
-                <RiLoginBoxLine className="text-base" />
-                <span>Login</span>
+          <div className="md:hidden py-4">
+            <div className="flex flex-col space-y-4">
+              <Link 
+                to="/books"
+                className="nav-link text-gray-700 hover:text-primary-700"
+              >
+                Books
               </Link>
-            )}
-          </motion.div>
+
+              {user ? (
+                <>
+                  {user.role === 'admin' && (
+                    <Link 
+                      to="/admin"
+                      className="nav-link text-gray-700 hover:text-primary-700"
+                    >
+                      Admin
+                    </Link>
+                  )}
+                  <Link 
+                    to="/profile"
+                    className="nav-link flex items-center space-x-1 text-gray-700 hover:text-primary-700"
+                  >
+                    <RiUser3Line />
+                    <span>Profile</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="nav-link flex items-center space-x-1 text-gray-700 hover:text-primary-700"
+                  >
+                    <RiLogoutBoxLine />
+                    <span>Logout</span>
+                  </button>
+                </>
+              ) : (
+                <Link 
+                  to="/login"
+                  className="nav-link flex items-center space-x-1 text-gray-700 hover:text-primary-700"
+                >
+                  <RiLoginBoxLine />
+                  <span>Login</span>
+                </Link>
+              )}
+
+              <div className="pt-2">
+                <form onSubmit={handleSearch} className="flex">
+                  <input
+                    type="text"
+                    placeholder="Search books..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="input py-1.5 pr-8 w-full text-sm"
+                  />
+                  <button 
+                    type="submit" 
+                    className="absolute right-6 transform translate-y-2.5 text-gray-400 hover:text-primary-700"
+                  >
+                    <HiOutlineSearch className="text-lg" />
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </nav>
