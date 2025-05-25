@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5001/api/v1';
+const API_BASE_URL = 'https://book-nook-be.vercel.app/api/v1';
 
 // Helper function for making API requests
 async function fetchData(endpoint, options = {}) {
