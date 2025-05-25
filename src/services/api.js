@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_BASEURL;
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 // Helper function for making API requests
 async function fetchData(endpoint, options = {}) {
@@ -20,13 +20,27 @@ async function fetchData(endpoint, options = {}) {
 
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
-    const data = await response.json();
     
+    // First check if response is ok before trying to parse JSON
     if (!response.ok) {
-      throw new Error(data.message || 'Something went wrong');
+      let errorMessage;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message;
+      } catch (e) {
+        // If can't parse JSON, use status text
+        errorMessage = response.statusText;
+      }
+      throw new Error(errorMessage || 'Something went wrong');
     }
-    
-    return data;
+
+    try {
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('JSON Parse Error:', error);
+      throw new Error('Invalid JSON response from server');
+    }
   } catch (error) {
     console.error('API Error:', error);
     throw error;
