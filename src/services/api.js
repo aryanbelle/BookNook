@@ -1,7 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+const API_BASE_URL = 'https://book-nook-be.vercel.app/api/v1';
 
 // Helper function for making API requests
 async function fetchData(endpoint, options = {}) {
+  console.log('Making request to:', `${API_BASE_URL}${endpoint}`);
   const token = localStorage.getItem('token');
   
   const headers = {
@@ -25,13 +26,21 @@ async function fetchData(endpoint, options = {}) {
     if (!response.ok) {
       let errorMessage;
       try {
-        const errorData = await response.json();
-        errorMessage = errorData.message;
+        const text = await response.text(); // Get the raw response text
+        console.log('Error response text:', text);
+        
+        try {
+          const errorData = JSON.parse(text);
+          errorMessage = errorData.message;
+        } catch (parseError) {
+          console.log('Error parsing JSON:', parseError);
+          errorMessage = text;
+        }
       } catch (e) {
-        // If can't parse JSON, use status text
+        console.log('Error reading response:', e);
         errorMessage = response.statusText;
       }
-      throw new Error(errorMessage || 'Something went wrong');
+      throw new Error(`API Error (${response.status}): ${errorMessage || 'Something went wrong'}`);
     }
 
     try {
