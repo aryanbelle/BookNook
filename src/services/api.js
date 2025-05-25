@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://book-nook-be.vercel.app/api/v1';
+const API_BASE_URL = import.meta.env.VITE_REACT_APP_BACKEND_BASEURL;
 
 // Helper function for making API requests
 async function fetchData(endpoint, options = {}) {
